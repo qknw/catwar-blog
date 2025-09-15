@@ -231,7 +231,22 @@
                     param: true,
                     paramFunc: (p) => ({ 'href': p ? p.substring(1) : '#', 'target': '_blank' }),
                     noParamFunc: (content) => ({ 'href': content, 'target': '_blank' })
-                }
+                },
+                'br': { tag: 'br', selfClosing: true },
+                'ol': { tag: 'ol' },
+                'ul': { tag: 'ul' },
+                'li': { tag: 'li' },
+                'audio': { 
+                    tag: 'audio', 
+                    selfClosing: true, 
+                    noParamFunc: (content) => ({ 'src': content.trim(), 'controls': '' }) 
+                },
+                'video': { 
+                    tag: 'video', 
+                    selfClosing: true, 
+                    noParamFunc: (content) => ({ 'src': content.trim(), 'controls': '' }) 
+                },
+                'code': { tag: 'pre' }
             };
             
             const process = (text) => {
@@ -353,21 +368,18 @@
              });
         });
         
-        // --- NEW SAVE BUTTON FUNCTIONALITY ---
+        // --- UPDATED SAVE BUTTON FUNCTIONALITY ---
         saveButton.addEventListener('click', () => {
-            // First, ensure the preview is up-to-date
-            previewButton.click();
-            
+            // Get the raw BBCode directly from the textarea
+            const content = bbcodeInput.value;
+            const title = blogTitleInput.value || "Без названия";
+
             // Check if there is content to save
-            if (previewContent.innerText.trim() === '' && previewTitle.textContent.trim() === 'Предпросмотр') {
-                // You can replace this with a more user-friendly notification
+            if (content.trim() === '' && title.trim() === 'Без названия') {
                 console.log("Нет содержимого для сохранения.");
                 return;
             }
 
-            const title = previewTitle.textContent;
-            const content = previewContent.innerText; // Get plain text content
-            
             // Combine title and content for the file
             const fileContent = `Название: ${title}\n\n---\n\n${content}`;
             
@@ -486,3 +498,4 @@
 
 </body>
 </html>
+
