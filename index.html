@@ -162,23 +162,11 @@
         <input type="text" class="input-field" id="blog-title" placeholder="Название блога">
 
         <textarea id="bbcode-input" class="textarea-field" placeholder="Текст"></textarea>
-
-        <button class="tags-button">📜 теги</button>
-
-        <div class="options">
-            <label><input type="checkbox" id="anonymous">Анонимно</label>
-            <label><input type="checkbox" id="no-anon-comments">Запретить анонимные комментарии</label>
-        </div>
-        
-        <p class="instructions">Игроки, которые могут редактировать этот блог (введите список ID через пробел). Себя указывать не нужно.</p>
-
-        <input type="text" class="input-field" placeholder="Список ID">
         
         <div class="actions">
-              <span class="add-poll-link">Добавить опрос</span>
               <div style="flex-grow: 1;"></div>
               <button id="preview-button" class="action-button">Предпросмотр</button>
-              <button class="action-button">Создать</button>
+              <button id="save-button" class="action-button">Сохранить</button>
         </div>
     </div>
 
@@ -338,6 +326,7 @@
         }
 
         const previewButton = document.getElementById('preview-button');
+        const saveButton = document.getElementById('save-button'); // New button
         const bbcodeInput = document.getElementById('bbcode-input');
         const blogTitleInput = document.getElementById('blog-title');
         const previewContainer = document.getElementById('preview-container');
@@ -357,11 +346,46 @@
 
             // Post-process table colors
              previewContent.querySelectorAll('table[data-cell-color]').forEach(table => {
-                const color = table.dataset.cellColor;
-                table.querySelectorAll('td').forEach(cell => {
-                    cell.style.backgroundColor = color;
-                });
-            });
+                 const color = table.dataset.cellColor;
+                 table.querySelectorAll('td').forEach(cell => {
+                     cell.style.backgroundColor = color;
+                 });
+             });
+        });
+        
+        // --- NEW SAVE BUTTON FUNCTIONALITY ---
+        saveButton.addEventListener('click', () => {
+            // First, ensure the preview is up-to-date
+            previewButton.click();
+            
+            // Check if there is content to save
+            if (previewContent.innerText.trim() === '' && previewTitle.textContent.trim() === 'Предпросмотр') {
+                // You can replace this with a more user-friendly notification
+                console.log("Нет содержимого для сохранения.");
+                return;
+            }
+
+            const title = previewTitle.textContent;
+            const content = previewContent.innerText; // Get plain text content
+            
+            // Combine title and content for the file
+            const fileContent = `Название: ${title}\n\n---\n\n${content}`;
+            
+            // Create a Blob
+            const blob = new Blob([fileContent], { type: 'text/plain;charset=utf-8' });
+            
+            // Create a temporary link to trigger the download
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            
+            // Generate a filename from the blog title
+            const filename = (blogTitleInput.value.trim().replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'blog_post') + '.txt';
+            link.download = filename;
+            
+            // Append to body, click, and remove
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         });
 
         previewContent.addEventListener('click', (event) => {
@@ -378,7 +402,7 @@
             }
         });
 
-        // --- НОВЫЙ КОД ДЛЯ ПАНЕЛИ ИНСТРУМЕНТОВ ---
+        // --- КОД ДЛЯ ПАНЕЛИ ИНСТРУМЕНТОВ ---
         const toolbar = document.querySelector('.toolbar');
         toolbar.addEventListener('click', (event) => {
             const target = event.target;
