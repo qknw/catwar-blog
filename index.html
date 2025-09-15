@@ -175,10 +175,10 @@
         <input type="text" class="input-field" placeholder="Список ID">
         
         <div class="actions">
-             <span class="add-poll-link">Добавить опрос</span>
-             <div style="flex-grow: 1;"></div>
-             <button id="preview-button" class="action-button">Предпросмотр</button>
-             <button class="action-button">Создать</button>
+              <span class="add-poll-link">Добавить опрос</span>
+              <div style="flex-grow: 1;"></div>
+              <button id="preview-button" class="action-button">Предпросмотр</button>
+              <button class="action-button">Создать</button>
         </div>
     </div>
 
@@ -287,42 +287,42 @@
                                 style = style.replace('{param}', pValue);
                             }
                              if(tagDef.paramFunc) {
-                                const pAttrs = tagDef.paramFunc(param);
-                                for(const key in pAttrs) {
-                                    attrs += ` ${key}="${pAttrs[key]}"`;
-                                }
-                            }
+                                 const pAttrs = tagDef.paramFunc(param);
+                                 for(const key in pAttrs) {
+                                     attrs += ` ${key}="${pAttrs[key]}"`;
+                                 }
+                             }
                         }
                         
                         if(tagDef.align) attrs += ` align="${tagDef.align}"`;
                         if (style) attrs += ` style="${style}"`;
 
                         if (tagDef.selfClosing) {
-                           let innerContentMatch = text.substring(regex.lastIndex).match(/[^\[]*/);
-                           let innerContent = '';
-                           if(innerContentMatch) {
-                               innerContent = innerContentMatch[0];
-                               regex.lastIndex += innerContent.length;
-                           }
-                           
-                           const nextClosingTagMatch = text.substring(regex.lastIndex).match(/\[\/([^\]]+)\]/);
+                            let innerContentMatch = text.substring(regex.lastIndex).match(/[^\[]*/);
+                            let innerContent = '';
+                            if(innerContentMatch) {
+                                innerContent = innerContentMatch[0];
+                                regex.lastIndex += innerContent.length;
+                            }
+                            
+                            const nextClosingTagMatch = text.substring(regex.lastIndex).match(/\[\/([^\]]+)\]/);
 
-                           if(nextClosingTagMatch && nextClosingTagMatch[1].trim().toLowerCase() === cleanTagName) {
-                               if(tagDef.noParamFunc) {
-                                    const pAttrs = tagDef.noParamFunc(innerContent.trim());
-                                    for(const key in pAttrs) {
-                                        attrs += ` ${key}="${pAttrs[key]}"`;
-                                    }
-                               }
-                               result += `<${tagDef.tag}${attrs}>`;
-                               regex.lastIndex += nextClosingTagMatch[0].length;
-                           } else {
-                               result += `<${tagDef.tag}${attrs}>`;
-                           }
-                           
+                            if(nextClosingTagMatch && nextClosingTagMatch[1].trim().toLowerCase() === cleanTagName) {
+                                if(tagDef.noParamFunc) {
+                                     const pAttrs = tagDef.noParamFunc(innerContent.trim());
+                                     for(const key in pAttrs) {
+                                         attrs += ` ${key}="${pAttrs[key]}"`;
+                                     }
+                                }
+                                result += `<${tagDef.tag}${attrs}>`;
+                                regex.lastIndex += nextClosingTagMatch[0].length;
+                            } else {
+                                result += `<${tagDef.tag}${attrs}>`;
+                            }
+                            
                         } else {
-                           result += `<${tagDef.tag}${attrs}>`;
-                           stack.push(cleanTagName);
+                            result += `<${tagDef.tag}${attrs}>`;
+                            stack.push(cleanTagName);
                         }
                     }
                 }
@@ -377,12 +377,88 @@
                 }
             }
         });
+
+        // --- НОВЫЙ КОД ДЛЯ ПАНЕЛИ ИНСТРУМЕНТОВ ---
+        const toolbar = document.querySelector('.toolbar');
+        toolbar.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target.tagName !== 'BUTTON') {
+                return;
+            }
+
+            const command = target.textContent.trim();
+            const bbcodeTextarea = document.getElementById('bbcode-input');
+
+            const simpleTags = {
+                'B': { start: '[b]', end: '[/b]' },
+                'I': { start: '[i]', end: '[/i]' },
+                'U': { start: '[u]', end: '[/u]' },
+                'S': { start: '[s]', end: '[/s]' },
+                'Ō': { start: '[o]', end: '[/o]' },
+                'center': { start: '[center]', end: '[/center]' },
+                'right': { start: '[right]', end: '[/right]' },
+                'justify': { start: '[justify]', end: '[/justify]' },
+                'hr': { start: '[hr]', end: '' },
+                'br': { start: '[br]', end: '' },
+                'table': { start: '[table]\n', end: '\n[/table]' },
+                'tr': { start: '\t[tr]\n', end: '\n\t[/tr]' },
+                'td': { start: '\t\t[td]', end: '[/td]\n' },
+                'ol': { start: '[ol]\n', end: '\n[/ol]' },
+                'ul': { start: '[ul]\n', end: '\n[/ul]' },
+                'li': { start: '\t[li]', end: '[/li]\n' },
+                'audio': { start: '[audio]', end: '[/audio]' },
+                'video': { start: '[video]', end: '[/video]' },
+                'code': { start: '[code]', end: '[/code]' },
+                'img': { start: '[img]', end: '[/img]' }
+            };
+
+            const promptTags = {
+                'url': { prompt: 'Введите URL', default: 'https://' },
+                'color': { prompt: 'Введите цвет (например, red или #FF0000)', default: 'red' },
+                'bgr': { prompt: 'Введите цвет фона', default: '#FFFF00' },
+                'bgrf': { prompt: 'Введите цвет фона для блока', default: '#FFFF00' },
+                'size': { prompt: 'Введите размер шрифта (число)', default: '12' },
+                'font': { prompt: 'Введите название шрифта', default: 'Arial' },
+                'header': { prompt: 'Введите ID заголовка', default: '1' },
+                'block': { prompt: 'Введите ID блока', default: '1' },
+                'div': { prompt: 'Введите URL изображения для фона', default: 'https://' },
+                'divr': { prompt: 'Введите URL изображения для фона (повторяющегося)', default: 'https://' },
+                'pad': { prompt: 'Введите отступ в пикселях (число)', default: '10' }
+            };
+
+            function insertTags(startTag, endTag = '') {
+                const startPos = bbcodeTextarea.selectionStart;
+                const endPos = bbcodeTextarea.selectionEnd;
+                const selectedText = bbcodeTextarea.value.substring(startPos, endPos);
+                
+                const newText = `${startTag}${selectedText}${endTag}`;
+
+                bbcodeTextarea.setRangeText(newText, startPos, endPos, 'end');
+                
+                if (selectedText.length === 0) {
+                     bbcodeTextarea.selectionStart = bbcodeTextarea.selectionEnd = startPos + startTag.length;
+                } else {
+                     bbcodeTextarea.selectionStart = startPos + startTag.length;
+                     bbcodeTextarea.selectionEnd = startPos + startTag.length + selectedText.length;
+                }
+
+                bbcodeTextarea.focus();
+            }
+
+            if (simpleTags[command]) {
+                const { start, end } = simpleTags[command];
+                insertTags(start, end);
+            } else if (promptTags[command]) {
+                const { prompt: promptText, default: defaultValue } = promptTags[command];
+                const param = prompt(promptText, defaultValue);
+                if (param !== null && param.trim() !== '') {
+                    const startTag = `[${command.toLowerCase()}=${param}]`;
+                    const endTag = `[/${command.toLowerCase()}]`;
+                    insertTags(startTag, endTag);
+                }
+            }
+        });
     </script>
 
 </body>
 </html>
-
-
-
-
-
