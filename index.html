@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактор блога</title>
+    <!-- Библиотека больше не используется, вся логика - в кастомном скрипте -->
+    <style>
+        /* General body styles to match the background color */
+        body {
+            background-color: #c3a97d;
+            font-family: Arial, sans-serif;
+            color: #333;
+            padding: 20px;
+        }
+
+        /* Main container for the editor */
+        .editor-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #d7c39d;
+            padding: 15px;
+            border: 1px solid #a18a61;
+            border-radius: 5px;
+        }
+
+        /* Styling for the toolbar */
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            padding: 5px;
+            background-color: #a18a61;
+            border-radius: 3px;
+            margin-bottom: 10px;
+        }
+
+        /* Styling for toolbar buttons */
+        .toolbar button {
+            background-color: #e0e0e0;
+            border: 1px solid #999;
+            border-radius: 3px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-family: 'Times New Roman', Times, serif;
+        }
+
+        .toolbar button.bold { font-weight: bold; }
+        .toolbar button.italic { font-style: italic; }
+        .toolbar button.underline { text-decoration: underline; }
+        .toolbar button.strike { text-decoration: line-through; }
+
+        /* General input and textarea styling */
+        .input-field,
+        .textarea-field {
+            width: 100%;
+            background-color: #1c1c1c;
+            border: 1px solid #555;
+            border-radius: 3px;
+            color: #cccccc;
+            padding: 10px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .textarea-field {
+            height: 400px;
+            resize: vertical;
+        }
+
+        /* Styling for the tags button */
+        .tags-button {
+            background-color: #e0e0e0;
+            border: 1px solid #999;
+            border-radius: 3px;
+            padding: 5px 10px;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+        
+        /* Container for options (checkboxes) */
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .options label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        
+        .instructions {
+            margin-top: 10px;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .action-button {
+            background-color: #555;
+            color: #fff;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .action-button:hover { background-color: #666; }
+        .add-poll-link { color: #333; text-decoration: underline; cursor: pointer; }
+
+        /* Styling for the preview area */
+        .preview-area {
+            max-width: 880px;
+            margin: 20px auto 0;
+            background-color: #f0e6d2;
+            padding: 15px;
+            border: 1px solid #a18a61;
+            border-radius: 5px;
+            color: #333;
+            word-wrap: break-word;
+            line-height: 1.6;
+        }
+        .preview-area .parsed a {
+            text-decoration: none;
+        }
+        .preview-area .parsed table {
+            border-collapse: separate;
+            border-spacing: 2px 0;
+        }
+        .preview-area .parsed td {
+            padding: 0;
+            vertical-align: top;
+        }
+        /* Fix for overflowing images */
+        .preview-area .parsed img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="editor-container">
+        <div class="toolbar">
+             <button class="bold">B</button><button class="italic">I</button><button class="underline">U</button><button class="strike">S</button><button>Ō</button><button>center</button><button>right</button><button>justify</button><button>url</button><button>img</button><button>color</button><button>bgr</button><button>bgrf</button><button>size</button><button>font</button><button>hr</button><button>br</button><button>header</button><button>block</button><button>table</button><button>tr</button><button>td</button><button>ol</button><button>ul</button><button>li</button><button>audio</button><button>video</button><button>div</button><button>divr</button><button>code</button><button>pad</button><button>🖼</button>
+        </div>
+
+        <input type="text" class="input-field" id="blog-title" placeholder="Название блога">
+
+        <textarea id="bbcode-input" class="textarea-field" placeholder="Текст"></textarea>
+
+        <button class="tags-button">📜 теги</button>
+
+        <div class="options">
+            <label><input type="checkbox" id="anonymous">Анонимно</label>
+            <label><input type="checkbox" id="no-anon-comments">Запретить анонимные комментарии</label>
+        </div>
+        
+        <p class="instructions">Игроки, которые могут редактировать этот блог (введите список ID через пробел). Себя указывать не нужно.</p>
+
+        <input type="text" class="input-field" placeholder="Список ID">
+        
+        <div class="actions">
+             <span class="add-poll-link">Добавить опрос</span>
+             <div style="flex-grow: 1;"></div>
+             <button id="preview-button" class="action-button">Предпросмотр</button>
+             <button class="action-button">Создать</button>
+        </div>
+    </div>
+
+    <div id="preview-container" class="preview-area" style="display: none;">
+        <h3 id="preview-title"></h3>
+        <div id="preview-content"></div>
+    </div>
+
+    <script>
+        function bbcodeToHtml(str) {
+            str = str.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            
+            // Handle newlines
+            str = str.replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\n/g, '<br>');
+
+            const tagMap = {
+                'b': { tag: 'b' }, 'i': { tag: 'i' }, 'u': { tag: 'u' }, 's': { tag: 's' },
+                'o': { tag: 'span', style: 'text-decoration: overline;' },
+                'center': { tag: 'div', align: 'center' },
+                'right': { tag: 'div', align: 'right' },
+                'justify': { tag: 'div', style: 'text-align: justify;' },
+                'hr': { tag: 'hr', selfClosing: true },
+                'table': { 
+                    tag: 'table', 
+                    paramFunc: (p) => p === '=0' ? {} : (p ? {'data-cell-color': p.substring(1)} : {})
+                },
+                'tr': { tag: 'tr' },
+                'td': { tag: 'td' },
+                'header': {
+                    tag: 'a',
+                    class: 'headers',
+                    href: '#',
+                    paramFunc: (p) => { 
+                        const id = p ? p.substring(1) : '';
+                        return { 'data-menu': id, 'data-id': id };
+                    }
+                },
+                'block': {
+                    tag: 'div',
+                    class: 'blocks',
+                    style: 'display: none;',
+                    paramFunc: (p) => {
+                        const id = p ? p.substring(1) : '';
+                        return { 'data-menu': id, 'data-id': id };
+                    }
+                },
+                'color': { tag: 'span', style: 'color: {param};', param: true },
+                'font': { tag: 'span', style: 'font-family: {param};', param: true },
+                'size': { tag: 'span', style: 'font-size: {param}pt;', param: true },
+                'bgr': { tag: 'span', style: 'background-color: {param};', param: true },
+                'bgrf': { tag: 'div', style: 'background-color: {param};', param: true },
+                'pad': { tag: 'div', style: 'padding: {param}px;', param: true },
+                'div': { tag: 'div', style: 'background-image: url(\'{param}\');', param: true },
+                'divr': { tag: 'div', style: 'background-image: url(\'{param}\');', param: true }, // Same as div based on target
+                'img': { 
+                    tag: 'img', 
+                    selfClosing: true,
+                    noParamFunc: (content) => ({ 'src': content }),
+                },
+                'url': {
+                    tag: 'a',
+                    param: true,
+                    paramFunc: (p) => ({ 'href': p ? p.substring(1) : '#', 'target': '_blank' }),
+                    noParamFunc: (content) => ({ 'href': content, 'target': '_blank' })
+                }
+            };
+            
+            const process = (text) => {
+                const regex = /\[(\/)?([a-zA-Z0-9]+)(=[^\]]+)?\]|([^\[]+|\[)/g;
+                let match;
+                let result = '';
+                const stack = [];
+
+                while ((match = regex.exec(text)) !== null) {
+                    let [fullMatch, isClosing, tagName, param, content] = match;
+
+                    if (content) {
+                        result += content;
+                        continue;
+                    }
+
+                    const cleanTagName = tagName.trim().toLowerCase();
+                    const tagDef = tagMap[cleanTagName];
+                    if (!tagDef) {
+                        result += fullMatch;
+                        continue;
+                    }
+
+                    if (isClosing) {
+                        if (stack.length > 0 && stack[stack.length - 1].toLowerCase() === cleanTagName) {
+                            stack.pop();
+                            result += `</${tagDef.tag}>`;
+                        } else {
+                            result += fullMatch;
+                        }
+                    } else {
+                        let attrs = '';
+                        if (tagDef.class) attrs += ` class="${tagDef.class}"`;
+                        if (tagDef.href) attrs += ` href="${tagDef.href}"`;
+                        
+                        let style = tagDef.style ? tagDef.style : '';
+
+                        if (param) {
+                            const pValue = param.substring(1);
+                            if (tagDef.param && style) {
+                                style = style.replace('{param}', pValue);
+                            }
+                             if(tagDef.paramFunc) {
+                                const pAttrs = tagDef.paramFunc(param);
+                                for(const key in pAttrs) {
+                                    attrs += ` ${key}="${pAttrs[key]}"`;
+                                }
+                            }
+                        }
+                        
+                        if(tagDef.align) attrs += ` align="${tagDef.align}"`;
+                        if (style) attrs += ` style="${style}"`;
+
+                        if (tagDef.selfClosing) {
+                           let innerContentMatch = text.substring(regex.lastIndex).match(/[^\[]*/);
+                           let innerContent = '';
+                           if(innerContentMatch) {
+                               innerContent = innerContentMatch[0];
+                               regex.lastIndex += innerContent.length;
+                           }
+                           
+                           const nextClosingTagMatch = text.substring(regex.lastIndex).match(/\[\/([^\]]+)\]/);
+
+                           if(nextClosingTagMatch && nextClosingTagMatch[1].trim().toLowerCase() === cleanTagName) {
+                               if(tagDef.noParamFunc) {
+                                    const pAttrs = tagDef.noParamFunc(innerContent.trim());
+                                    for(const key in pAttrs) {
+                                        attrs += ` ${key}="${pAttrs[key]}"`;
+                                    }
+                               }
+                               result += `<${tagDef.tag}${attrs}>`;
+                               regex.lastIndex += nextClosingTagMatch[0].length;
+                           } else {
+                               result += `<${tagDef.tag}${attrs}>`;
+                           }
+                           
+                        } else {
+                           result += `<${tagDef.tag}${attrs}>`;
+                           stack.push(cleanTagName);
+                        }
+                    }
+                }
+                while(stack.length > 0) {
+                    const openTag = stack.pop();
+                    result += `</${tagMap[openTag.toLowerCase()].tag}>`;
+                }
+
+                return result;
+            };
+
+            return process(str);
+        }
+
+        const previewButton = document.getElementById('preview-button');
+        const bbcodeInput = document.getElementById('bbcode-input');
+        const blogTitleInput = document.getElementById('blog-title');
+        const previewContainer = document.getElementById('preview-container');
+        const previewContent = document.getElementById('preview-content');
+        const previewTitle = document.getElementById('preview-title');
+
+        previewButton.addEventListener('click', () => {
+            const bbcodeText = bbcodeInput.value;
+            const titleText = blogTitleInput.value || "Предпросмотр";
+
+            const html = bbcodeToHtml(bbcodeText);
+            
+            previewTitle.textContent = titleText;
+            previewContent.innerHTML = `<div class="parsed">${html}</div>`;
+            
+            previewContainer.style.display = 'block';
+
+            // Post-process table colors
+             previewContent.querySelectorAll('table[data-cell-color]').forEach(table => {
+                const color = table.dataset.cellColor;
+                table.querySelectorAll('td').forEach(cell => {
+                    cell.style.backgroundColor = color;
+                });
+            });
+        });
+
+        previewContent.addEventListener('click', (event) => {
+            const target = event.target.closest('a.headers');
+            if (target) {
+                event.preventDefault();
+                const id = target.dataset.id;
+                if (id) {
+                    const blocks = previewContent.querySelectorAll(`.blocks[data-id="${id}"]`);
+                    blocks.forEach(block => {
+                        block.style.display = block.style.display === 'none' ? 'block' : 'none';
+                    });
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>
+
+
+
+
