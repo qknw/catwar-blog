@@ -4,153 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Редактор блога</title>
-    <!-- Библиотека больше не используется, вся логика - в кастомном скрипте -->
-    <style>
-        /* General body styles to match the background color */
-        body {
-            background-color: #c3a97d;
-            font-family: Arial, sans-serif;
-            color: #333;
-            padding: 20px;
-        }
-
-        /* Main container for the editor */
-        .editor-container {
-            max-width: 900px;
-            margin: 0 auto;
-            background-color: #d7c39d;
-            padding: 15px;
-            border: 1px solid #a18a61;
-            border-radius: 5px;
-        }
-
-        /* Styling for the toolbar */
-        .toolbar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            padding: 5px;
-            background-color: #a18a61;
-            border-radius: 3px;
-            margin-bottom: 10px;
-        }
-
-        /* Styling for toolbar buttons */
-        .toolbar button {
-            background-color: #e0e0e0;
-            border: 1px solid #999;
-            border-radius: 3px;
-            padding: 4px 8px;
-            cursor: pointer;
-            font-family: 'Times New Roman', Times, serif;
-        }
-
-        .toolbar button.bold { font-weight: bold; }
-        .toolbar button.italic { font-style: italic; }
-        .toolbar button.underline { text-decoration: underline; }
-        .toolbar button.strike { text-decoration: line-through; }
-
-        /* General input and textarea styling */
-        .input-field,
-        .textarea-field {
-            width: 100%;
-            background-color: #1c1c1c;
-            border: 1px solid #555;
-            border-radius: 3px;
-            color: #cccccc;
-            padding: 10px;
-            box-sizing: border-box;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-
-        .textarea-field {
-            height: 400px;
-            resize: vertical;
-        }
-
-        /* Styling for the tags button */
-        .tags-button {
-            background-color: #e0e0e0;
-            border: 1px solid #999;
-            border-radius: 3px;
-            padding: 5px 10px;
-            cursor: pointer;
-            margin-bottom: 15px;
-        }
-        
-        /* Container for options (checkboxes) */
-        .options {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-
-        .options label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-        }
-        
-        .instructions {
-            margin-top: 10px;
-            margin-bottom: 5px;
-            font-size: 14px;
-        }
-        
-        .actions {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .action-button {
-            background-color: #555;
-            color: #fff;
-            border: 1px solid #333;
-            border-radius: 4px;
-            padding: 8px 15px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        
-        .action-button:hover { background-color: #666; }
-        .add-poll-link { color: #333; text-decoration: underline; cursor: pointer; }
-
-        /* Styling for the preview area */
-        .preview-area {
-            max-width: 880px;
-            margin: 20px auto 0;
-            background-color: #f0e6d2;
-            padding: 15px;
-            border: 1px solid #a18a61;
-            border-radius: 5px;
-            color: #333;
-            word-wrap: break-word;
-            line-height: 1.6;
-        }
-        .preview-area .parsed a {
-            text-decoration: none;
-        }
-        .preview-area .parsed table {
-            border-collapse: separate;
-            border-spacing: 2px 0;
-        }
-        .preview-area .parsed td {
-            padding: 0;
-            vertical-align: top;
-        }
-        /* Fix for overflowing images */
-        .preview-area .parsed img {
-            max-width: 100%;
-            height: auto;
-            display: block;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
@@ -162,7 +16,7 @@
         <input type="text" class="input-field" id="blog-title" placeholder="Название блога">
 
         <textarea id="bbcode-input" class="textarea-field" placeholder="Текст"></textarea>
-        
+
         <div class="actions">
               <div style="flex-grow: 1;"></div>
               <button id="preview-button" class="action-button">Предпросмотр</button>
@@ -178,7 +32,7 @@
     <script>
         function bbcodeToHtml(str) {
             str = str.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-            
+
             // Handle newlines
             str = str.replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\n/g, '<br>');
 
@@ -189,8 +43,8 @@
                 'right': { tag: 'div', align: 'right' },
                 'justify': { tag: 'div', style: 'text-align: justify;' },
                 'hr': { tag: 'hr', selfClosing: true },
-                'table': { 
-                    tag: 'table', 
+                'table': {
+                    tag: 'table',
                     paramFunc: (p) => p === '=0' ? {} : (p ? {'data-cell-color': p.substring(1)} : {})
                 },
                 'tr': { tag: 'tr' },
@@ -199,7 +53,7 @@
                     tag: 'a',
                     class: 'headers',
                     href: '#',
-                    paramFunc: (p) => { 
+                    paramFunc: (p) => {
                         const id = p ? p.substring(1) : '';
                         return { 'data-menu': id, 'data-id': id };
                     }
@@ -221,8 +75,8 @@
                 'pad': { tag: 'div', style: 'padding: {param}px;', param: true },
                 'div': { tag: 'div', style: 'background-image: url(\'{param}\');', param: true },
                 'divr': { tag: 'div', style: 'background-image: url(\'{param}\');', param: true }, // Same as div based on target
-                'img': { 
-                    tag: 'img', 
+                'img': {
+                    tag: 'img',
                     selfClosing: true,
                     noParamFunc: (content) => ({ 'src': content }),
                 },
@@ -236,19 +90,19 @@
                 'ol': { tag: 'ol' },
                 'ul': { tag: 'ul' },
                 'li': { tag: 'li' },
-                'audio': { 
-                    tag: 'audio', 
-                    selfClosing: true, 
-                    noParamFunc: (content) => ({ 'src': content.trim(), 'controls': '' }) 
+                'audio': {
+                    tag: 'audio',
+                    selfClosing: true,
+                    noParamFunc: (content) => ({ 'src': content.trim(), 'controls': '' })
                 },
-                'video': { 
-                    tag: 'video', 
-                    selfClosing: true, 
-                    noParamFunc: (content) => ({ 'src': content.trim(), 'controls': '' }) 
+                'video': {
+                    tag: 'video',
+                    selfClosing: true,
+                    noParamFunc: (content) => ({ 'src': content.trim(), 'controls': '' })
                 },
                 'code': { tag: 'pre' }
             };
-            
+
             const process = (text) => {
                 const regex = /\[(\/)?([a-zA-Z0-9]+)(=[^\]]+)?\]|([^\[]+|\[)/g;
                 let match;
@@ -281,7 +135,7 @@
                         let attrs = '';
                         if (tagDef.class) attrs += ` class="${tagDef.class}"`;
                         if (tagDef.href) attrs += ` href="${tagDef.href}"`;
-                        
+
                         let style = tagDef.style ? tagDef.style : '';
 
                         if (param) {
@@ -296,7 +150,7 @@
                                  }
                              }
                         }
-                        
+
                         if(tagDef.align) attrs += ` align="${tagDef.align}"`;
                         if (style) attrs += ` style="${style}"`;
 
@@ -307,7 +161,7 @@
                                 innerContent = innerContentMatch[0];
                                 regex.lastIndex += innerContent.length;
                             }
-                            
+
                             const nextClosingTagMatch = text.substring(regex.lastIndex).match(/\[\/([^\]]+)\]/);
 
                             if(nextClosingTagMatch && nextClosingTagMatch[1].trim().toLowerCase() === cleanTagName) {
@@ -322,7 +176,7 @@
                             } else {
                                 result += `<${tagDef.tag}${attrs}>`;
                             }
-                            
+
                         } else {
                             result += `<${tagDef.tag}${attrs}>`;
                             stack.push(cleanTagName);
@@ -353,10 +207,10 @@
             const titleText = blogTitleInput.value || "Предпросмотр";
 
             const html = bbcodeToHtml(bbcodeText);
-            
+
             previewTitle.textContent = titleText;
             previewContent.innerHTML = `<div class="parsed">${html}</div>`;
-            
+
             previewContainer.style.display = 'block';
 
             // Post-process table colors
@@ -367,7 +221,7 @@
                  });
              });
         });
-        
+
         // --- UPDATED SAVE BUTTON FUNCTIONALITY ---
         saveButton.addEventListener('click', () => {
             // Get the raw BBCode directly from the textarea
@@ -382,18 +236,18 @@
 
             // Combine title and content for the file
             const fileContent = `Название: ${title}\n\n---\n\n${content}`;
-            
+
             // Create a Blob
             const blob = new Blob([fileContent], { type: 'text/plain;charset=utf-8' });
-            
+
             // Create a temporary link to trigger the download
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            
+
             // Generate a filename from the blog title
             const filename = (blogTitleInput.value.trim().replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'blog_post') + '.txt';
             link.download = filename;
-            
+
             // Append to body, click, and remove
             document.body.appendChild(link);
             link.click();
@@ -466,11 +320,11 @@
                 const startPos = bbcodeTextarea.selectionStart;
                 const endPos = bbcodeTextarea.selectionEnd;
                 const selectedText = bbcodeTextarea.value.substring(startPos, endPos);
-                
+
                 const newText = `${startTag}${selectedText}${endTag}`;
 
                 bbcodeTextarea.setRangeText(newText, startPos, endPos, 'end');
-                
+
                 if (selectedText.length === 0) {
                      bbcodeTextarea.selectionStart = bbcodeTextarea.selectionEnd = startPos + startTag.length;
                 } else {
@@ -498,4 +352,3 @@
 
 </body>
 </html>
-
