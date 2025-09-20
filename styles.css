@@ -7,6 +7,54 @@
             border: 1px solid #a18a61;
             border-radius: 5px;
         }
+		
+		body{
+			background-color: #c3a97d;
+			color: #c3a97d;
+			transition: background-color 0.3s ease, color 0.3s ease;
+		}
+
+        body.theme-dark {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+
+        body.theme-dark .editor-container {
+            background-color: #1e1e1e;
+            border-color: #383838;
+            color: #e0e0e0;
+        }
+
+        body.theme-dark .toolbar {
+            background-color: #2a2a2a;
+        }
+
+        body.theme-dark .toolbar button {
+            background-color: #3a3a3a;
+            border-color: #555555;
+            color: #f5f5f5;
+        }
+
+        body.theme-dark .toolbar button:hover {
+            background-color: #4a4a4a;
+        }
+
+        body.theme-dark .input-field,
+        body.theme-dark .textarea-field {
+            background-color: #111111;
+            border-color: #444444;
+            color: #f0f0f0;
+        }
+
+        body.theme-dark .action-button {
+            background-color: #3a3a3a;
+            border-color: #5a5a5a;
+            color: #f5f5f5;
+        }
+
+        body.theme-dark .action-button:hover {
+            background-color: #525252;
+        }
 
         /* Styling for the toolbar */
         .toolbar {
@@ -800,11 +848,6 @@ table {
 
 table {
 	border-color: #333;
-}
-
-body {
-	background-image: url('background.jpg?1154633074');
-	color: #000000;
 }
 
 a:link, a:visited {
