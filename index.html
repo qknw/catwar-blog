@@ -18,9 +18,10 @@
         <textarea id="bbcode-input" class="textarea-field" placeholder="Текст"></textarea>
 
         <div class="actions">
+              <button id="theme-toggle" class="action-button" type="button">Тёмная тема</button>
               <div style="flex-grow: 1;"></div>
-              <button id="preview-button" class="action-button">Предпросмотр</button>
-              <button id="save-button" class="action-button">Сохранить</button>
+              <button id="preview-button" class="action-button" type="button">Предпросмотр</button>
+              <button id="save-button" class="action-button" type="button">Сохранить</button>
         </div>
     </div>
 
@@ -196,11 +197,48 @@
 
         const previewButton = document.getElementById('preview-button');
         const saveButton = document.getElementById('save-button'); // New button
+        const themeToggle = document.getElementById('theme-toggle');
         const bbcodeInput = document.getElementById('bbcode-input');
         const blogTitleInput = document.getElementById('blog-title');
         const previewContainer = document.getElementById('preview-container');
         const previewContent = document.getElementById('preview-content');
         const previewTitle = document.getElementById('preview-title');
+        const THEME_STORAGE_KEY = 'editor-theme';
+
+        function getStoredTheme() {
+            try {
+                return localStorage.getItem(THEME_STORAGE_KEY);
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function storeTheme(theme) {
+            try {
+                localStorage.setItem(THEME_STORAGE_KEY, theme);
+            } catch (error) {
+                /* Ignore storage errors to keep toggle functional */
+            }
+        }
+
+        function applyTheme(theme) {
+            document.body.classList.toggle('theme-dark', theme === 'dark');
+            themeToggle.textContent = theme === 'dark' ? 'Светлая тема' : 'Тёмная тема';
+            themeToggle.setAttribute('aria-pressed', theme === 'dark');
+            storeTheme(theme);
+        }
+
+        const savedTheme = getStoredTheme();
+        if (savedTheme === 'dark') {
+            applyTheme('dark');
+        } else {
+            applyTheme('light');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const nextTheme = document.body.classList.contains('theme-dark') ? 'light' : 'dark';
+            applyTheme(nextTheme);
+        });
 
         previewButton.addEventListener('click', () => {
             const bbcodeText = bbcodeInput.value;
