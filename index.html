@@ -34,15 +34,33 @@
         function bbcodeToHtml(str) {
             str = str.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-            // Handle newlines
-            str = str.replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\n/g, '<br>');
+            // Normalise newlines for downstream handling
+            str = str.replace(/\r\n?/g, '\n');
+
+            const formatPaddingValue = (rawValue) => {
+                if (!rawValue) {
+                    return '0';
+                }
+
+                const parts = rawValue.trim().split(/\s+/).filter(Boolean);
+                if (parts.length === 0) {
+                    return '0';
+                }
+
+                return parts.map((part) => {
+                    if (/^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/.test(part)) {
+                        return Number(part) === 0 ? '0' : `${part}px`;
+                    }
+                    return part;
+                }).join(' ');
+            };
 
             const tagMap = {
                 'b': { tag: 'b' }, 'i': { tag: 'i' }, 'u': { tag: 'u' }, 's': { tag: 's' },
-                'o': { tag: 'span', style: 'text-decoration: overline;' },
+                'o': { tag: 'span', style: 'text-decoration: overline' },
                 'center': { tag: 'div', align: 'center' },
                 'right': { tag: 'div', align: 'right' },
-                'justify': { tag: 'div', style: 'text-align: justify;' },
+                'justify': { tag: 'div', style: 'text-align: justify' },
                 'hr': { tag: 'hr', selfClosing: true },
                 'table': {
                     tag: 'table',
@@ -68,14 +86,14 @@
                         return { 'data-menu': id, 'data-id': id };
                     }
                 },
-                'color': { tag: 'span', style: 'color: {param};', param: true },
-                'font': { tag: 'span', style: 'font-family: {param};', param: true },
-                'size': { tag: 'span', style: 'font-size: {param}pt;', param: true },
-                'bgr': { tag: 'span', style: 'background-color: {param};', param: true },
-                'bgrf': { tag: 'div', style: 'background-color: {param};', param: true },
-                'pad': { tag: 'div', style: 'padding: {param}px;', param: true },
-                'div': { tag: 'div', style: 'background-image: url(\'{param}\');', param: true },
-                'divr': { tag: 'div', style: 'background-image: url(\'{param}\');', param: true }, // Same as div based on target
+                'color': { tag: 'span', style: 'color: {param}', param: true },
+                'font': { tag: 'span', style: 'font-family: {param}', param: true },
+                'size': { tag: 'span', style: 'font-size: {param}pt', param: true },
+                'bgr': { tag: 'span', style: 'background-color: {param}', param: true },
+                'bgrf': { tag: 'div', style: 'background-color: {param}', param: true },
+                'pad': { tag: 'div', style: 'padding: {param}', param: true, paramFormatter: formatPaddingValue },
+                'div': { tag: 'div', style: 'background-image: url(\'{param}\')', param: true },
+                'divr': { tag: 'div', style: 'background-image: url(\'{param}\')', param: true }, // Same as div based on target
                 'img': {
                     tag: 'img',
                     selfClosing: true,
@@ -110,11 +128,18 @@
                 let result = '';
                 const stack = [];
 
+                const appendContent = (value) => {
+                    if (!value) {
+                        return '';
+                    }
+                    return value.replace(/\n/g, '<br>');
+                };
+
                 while ((match = regex.exec(text)) !== null) {
                     let [fullMatch, isClosing, tagName, param, content] = match;
 
                     if (content) {
-                        result += content;
+                        result += appendContent(content);
                         continue;
                     }
 
@@ -134,15 +159,18 @@
                         }
                     } else {
                         let attrs = '';
-                        if (tagDef.class) attrs += ` class="${tagDef.class}"`;
                         if (tagDef.href) attrs += ` href="${tagDef.href}"`;
+                        if (tagDef.class) attrs += ` class="${tagDef.class}"`;
 
                         let style = tagDef.style ? tagDef.style : '';
 
                         if (param) {
                             const pValue = param.substring(1);
                             if (tagDef.param && style) {
-                                style = style.replace('{param}', pValue);
+                                const formattedValue = typeof tagDef.paramFormatter === 'function'
+                                    ? tagDef.paramFormatter(pValue)
+                                    : pValue;
+                                style = style.replace('{param}', formattedValue);
                             }
                              if(tagDef.paramFunc) {
                                  const pAttrs = tagDef.paramFunc(param);
@@ -188,6 +216,11 @@
                     const openTag = stack.pop();
                     result += `</${tagMap[openTag.toLowerCase()].tag}>`;
                 }
+
+                result = result
+                    .replace(/(<br>){2,}(?=<table\b)/gi, '<br><br>')
+                    .replace(/(<br>)+(?=<\/?(?:thead|tbody|tfoot|tr|td)\b)/gi, '')
+                    .replace(/(<br>)+(?=<\/table>)/gi, '');
 
                 return result;
             };
