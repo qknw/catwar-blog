@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -32,7 +32,7 @@
 
     <script>
         function bbcodeToHtml(str) {
-            str = str.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            str = str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
             // Normalise newlines for downstream handling
             str = str.replace(/\r\n?/g, '\n');
@@ -49,7 +49,7 @@
 
                 return parts.map((part) => {
                     if (/^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/.test(part)) {
-                        return Number(part) === 0 ? '0' : `${part}px`;
+                        return Number(part) === 0 ? '0px' : `${part}px`;
                     }
                     return part;
                 }).join(' ');
@@ -64,7 +64,7 @@
                 'hr': { tag: 'hr', selfClosing: true },
                 'table': {
                     tag: 'table',
-                    paramFunc: (p) => p === '=0' ? {} : (p ? {'data-cell-color': p.substring(1)} : {})
+                    paramFunc: (p) => p === '=0' ? {} : (p ? { 'data-cell-color': p.substring(1) } : {})
                 },
                 'tr': { tag: 'tr' },
                 'td': { tag: 'td' },
@@ -80,7 +80,7 @@
                 'block': {
                     tag: 'div',
                     class: 'blocks',
-                    style: 'display: none;',
+                    style: 'display: none',
                     paramFunc: (p) => {
                         const id = p ? p.substring(1) : '';
                         return { 'data-menu': id, 'data-id': id };
@@ -92,8 +92,8 @@
                 'bgr': { tag: 'span', style: 'background-color: {param}', param: true },
                 'bgrf': { tag: 'div', style: 'background-color: {param}', param: true },
                 'pad': { tag: 'div', style: 'padding: {param}', param: true, paramFormatter: formatPaddingValue },
-                'div': { tag: 'div', style: 'background-image: url(\'{param}\')', param: true },
-                'divr': { tag: 'div', style: 'background-image: url(\'{param}\')', param: true }, // Same as div based on target
+                'div': { tag: 'div', style: "background-image: url('{param}')", param: true },
+                'divr': { tag: 'div', style: "background-image: url('{param}')", param: true, afterOpen: '<br>' },
                 'img': {
                     tag: 'img',
                     selfClosing: true,
@@ -112,7 +112,13 @@
                 'audio': {
                     tag: 'audio',
                     selfClosing: true,
-                    noParamFunc: (content) => ({ 'src': content.trim(), 'controls': '' })
+                    noParamFunc: (content) => {
+                        const src = content.trim();
+                        if (!src) {
+                            return '<audio controls=""></audio>';
+                        }
+                        return `<audio controls=""><source src="${src}" type="audio/mpeg"> Воспроизведение аудиофайлов не поддерживается вашим браузером.</audio>`;
+                    }
                 },
                 'video': {
                     tag: 'video',
@@ -153,7 +159,11 @@
                     if (isClosing) {
                         if (stack.length > 0 && stack[stack.length - 1].toLowerCase() === cleanTagName) {
                             stack.pop();
-                            result += `</${tagDef.tag}>`;
+                            if (cleanTagName === 'table') {
+                                result += '</tbody></table>';
+                            } else {
+                                result += `</${tagDef.tag}>`;
+                            }
                         } else {
                             result += fullMatch;
                         }
@@ -172,35 +182,44 @@
                                     : pValue;
                                 style = style.replace('{param}', formattedValue);
                             }
-                             if(tagDef.paramFunc) {
-                                 const pAttrs = tagDef.paramFunc(param);
-                                 for(const key in pAttrs) {
-                                     attrs += ` ${key}="${pAttrs[key]}"`;
-                                 }
-                             }
+                            if (tagDef.paramFunc) {
+                                const pAttrs = tagDef.paramFunc(param);
+                                for (const key in pAttrs) {
+                                    attrs += ` ${key}="${pAttrs[key]}"`;
+                                }
+                            }
                         }
 
-                        if(tagDef.align) attrs += ` align="${tagDef.align}"`;
+                        if (tagDef.align) attrs += ` align="${tagDef.align}"`;
                         if (style) attrs += ` style="${style}"`;
 
                         if (tagDef.selfClosing) {
                             let innerContentMatch = text.substring(regex.lastIndex).match(/[^\[]*/);
                             let innerContent = '';
-                            if(innerContentMatch) {
+                            if (innerContentMatch) {
                                 innerContent = innerContentMatch[0];
                                 regex.lastIndex += innerContent.length;
                             }
 
                             const nextClosingTagMatch = text.substring(regex.lastIndex).match(/\[\/([^\]]+)\]/);
 
-                            if(nextClosingTagMatch && nextClosingTagMatch[1].trim().toLowerCase() === cleanTagName) {
-                                if(tagDef.noParamFunc) {
-                                     const pAttrs = tagDef.noParamFunc(innerContent.trim());
-                                     for(const key in pAttrs) {
-                                         attrs += ` ${key}="${pAttrs[key]}"`;
-                                     }
+                            if (nextClosingTagMatch && nextClosingTagMatch[1].trim().toLowerCase() === cleanTagName) {
+                                let rendered = null;
+                                if (tagDef.noParamFunc) {
+                                    const response = tagDef.noParamFunc(innerContent.trim(), param);
+                                    if (typeof response === 'string') {
+                                        rendered = response;
+                                    } else if (response && typeof response === 'object') {
+                                        for (const key in response) {
+                                            attrs += ` ${key}="${response[key]}"`;
+                                        }
+                                    }
                                 }
-                                result += `<${tagDef.tag}${attrs}>`;
+                                if (rendered !== null) {
+                                    result += rendered;
+                                } else {
+                                    result += `<${tagDef.tag}${attrs}>`;
+                                }
                                 regex.lastIndex += nextClosingTagMatch[0].length;
                             } else {
                                 result += `<${tagDef.tag}${attrs}>`;
@@ -208,19 +227,47 @@
 
                         } else {
                             result += `<${tagDef.tag}${attrs}>`;
+                            if (tagDef.afterOpen) {
+                                result += tagDef.afterOpen;
+                            }
+                            if (cleanTagName === 'table') {
+                                result += '<tbody>';
+                            }
                             stack.push(cleanTagName);
                         }
                     }
                 }
-                while(stack.length > 0) {
+
+                while (stack.length > 0) {
                     const openTag = stack.pop();
-                    result += `</${tagMap[openTag.toLowerCase()].tag}>`;
+                    if (openTag.toLowerCase() === 'table') {
+                        result += '</tbody></table>';
+                    } else {
+                        result += `</${tagMap[openTag.toLowerCase()].tag}>`;
+                    }
                 }
 
                 result = result
                     .replace(/(<br>){2,}(?=<table\b)/gi, '<br><br>')
-                    .replace(/(<br>)+(?=<\/?(?:thead|tbody|tfoot|tr|td)\b)/gi, '')
-                    .replace(/(<br>)+(?=<\/table>)/gi, '');
+                    .replace(/(<br>)+(?=<\/?(?:thead|tbody|tfoot|tr|td)\b)/gi, '\n')
+                    .replace(/(<br>)+(?=<\/table>)/gi, '\n');
+
+                result = result.replace(/>([^<]*)</g, (match, text) => {
+                    let processed = text;
+                    if (processed.indexOf('ι') !== -1) {
+                        processed = processed.replace(/ι/g, '');
+                    }
+                    if (processed.indexOf('  ') !== -1) {
+                        processed = processed.replace(/ {2}/g, ' &nbsp;');
+                    }
+                    if (processed.indexOf(' —') !== -1) {
+                        processed = processed.replace(/ (?=—)/g, '&nbsp;');
+                    }
+                    if (processed === text) {
+                        return match;
+                    }
+                    return `>${processed}<`;
+                });
 
                 return result;
             };
@@ -280,7 +327,7 @@
             const html = bbcodeToHtml(bbcodeText);
 
             previewTitle.textContent = titleText;
-            previewContent.innerHTML = `<div class="parsed">${html}</div>`;
+            previewContent.innerHTML = `<div id="preview_div" style=""><div class="parsed">${html}</div></div>`;
 
             previewContainer.style.display = 'block';
 
